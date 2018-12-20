@@ -9,9 +9,8 @@ pub use self::utils::*;
 use ndarray::Array;
 
 pub struct BPNN {
-    layer_num: usize,
-    pub weights: Vec<Matrix>,
-    pub changes: Vec<Matrix>,
+    weights: Vec<Matrix>,
+    changes: Vec<Matrix>,
     activations: Vec<Activation>,
     d_activations: Vec<DActivation>,
     cost: Cost,
@@ -42,7 +41,6 @@ impl BPNN {
         }
 
         Self {
-            layer_num: layer_settings.len(),
             weights: Ws,
             changes: Cs,
             activations: acts,
@@ -59,10 +57,10 @@ impl BPNN {
         rate: f64,
         factor: f64,
     ) -> (Vector, f64) {
-        assert_eq!(input.len(), self.weights[0].dim().1 - 1);
-        assert_eq!(target.len(), self.weights[self.layer_num - 1].dim().0);
+        let l = self.weights.len();
 
-        let l = self.layer_num;
+        assert_eq!(input.len(), self.weights[0].dim().1 - 1);
+        assert_eq!(target.len(), self.weights[l - 1].dim().0);
 
         let W = &mut self.weights;
 
@@ -118,5 +116,24 @@ impl BPNN {
 
         let error = (self.cost)(target, &output);
         (output, error)
+    }
+
+    pub fn predict(&self, input: &Vector) -> Vector {
+        let l = self.weights.len();
+
+        assert_eq!(input.len(), self.weights[0].dim().1 - 1);
+
+        let mut vector = {
+            let mut v = input.to_vec();
+            v.push(1.);
+            Array::from_vec(v)
+        };
+
+        for i in 0..l {
+            vector = (self.weights[i]).dot(&vector);
+            vector = (self.activations[i])(&vector);
+        }
+
+        vector
     }
 }
