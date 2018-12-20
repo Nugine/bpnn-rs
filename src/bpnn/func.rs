@@ -1,5 +1,4 @@
 use super::types::Vector;
-use ndarray::Array;
 
 pub fn sigmoid(x: &Vector) -> Vector {
     x.map(|f| f.tanh())

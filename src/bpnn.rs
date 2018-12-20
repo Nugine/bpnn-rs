@@ -6,6 +6,8 @@ pub use self::func::*;
 pub use self::types::*;
 pub use self::utils::*;
 
+use ndarray::Array;
+
 pub struct BPNN {
     layer_num: usize,
     weights: Vec<Matrix>,
@@ -16,6 +18,7 @@ pub struct BPNN {
     d_cost: DCost,
 }
 
+#[allow(non_snake_case)]
 impl BPNN {
     pub fn new(
         input_size: usize,
@@ -56,13 +59,23 @@ impl BPNN {
         rate: f64,
         factor: f64,
     ) -> (Vector, f64) {
+        assert_eq!(input.len(), self.weights[0].dim().1 - 1);
+        assert_eq!(target.len(), self.weights[self.layer_num - 1].dim().0);
+
         let l = self.layer_num;
-        let mut W = &mut self.weights;
-        let mut C = &mut self.changes;
+
+        let W = &mut self.weights;
+
+        let C = &mut self.changes;
+
         let activations = &self.activations;
         let d_activations = &self.d_activations;
 
-        let mut a = vec![input.to_owned()];
+        let mut a = vec![{
+            let mut v = input.to_vec();
+            v.push(1.);
+            Array::from_vec(v)
+        }];
 
         for i in 0..l {
             let x = &a[i];
