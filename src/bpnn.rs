@@ -1,8 +1,10 @@
+mod func;
 mod types;
 mod utils;
 
-use self::types::*;
-use self::utils::*;
+pub use self::func::*;
+pub use self::types::*;
+pub use self::utils::*;
 
 pub struct BPNN {
     layer_num: usize,
