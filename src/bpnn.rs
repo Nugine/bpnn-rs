@@ -10,8 +10,8 @@ use ndarray::Array;
 
 pub struct BPNN {
     layer_num: usize,
-    weights: Vec<Matrix>,
-    changes: Vec<Matrix>,
+    pub weights: Vec<Matrix>,
+    pub changes: Vec<Matrix>,
     activations: Vec<Activation>,
     d_activations: Vec<DActivation>,
     cost: Cost,
@@ -100,12 +100,12 @@ impl BPNN {
         d.reverse();
 
         for i in 0..l {
-            W[i] += &(&C[i] * factor);
+            W[i].scaled_add(factor, &C[i]);
         }
 
         let output = a.pop().unwrap();
 
-        for i in (l - 1)..=0 {
+        for i in (0..l).rev() {
             let (ol, il) = C[i].dim();
             let delta: Matrix = d.pop().unwrap().into_shape((ol, 1)).unwrap();
             let ip: Matrix = a.pop().unwrap().into_shape((1, il)).unwrap();
@@ -113,7 +113,7 @@ impl BPNN {
         }
 
         for i in 0..l {
-            W[i] += &(&C[i] * rate);
+            W[i].scaled_add(rate, &C[i]);
         }
 
         let error = (self.cost)(target, &output);
