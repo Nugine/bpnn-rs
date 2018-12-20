@@ -6,11 +6,8 @@
 
 ## Run it now
 
-First, clone this repository to your workspace.
-
-Then, 
-
-    cd bpnn
+    git clone https://github.com/Nugine/bpnn-rs.git
+    cd bpnn-rs
     cargo build
     cargo run
 
