@@ -10,9 +10,9 @@ mod demo {
 
     pub fn run() {
         let layer_settings: Vec<(usize, Activation, DActivation)> = vec![
-            (3, sigmoid, d_sigmoid),
-            (4, sigmoid, d_sigmoid),
-            (1, sigmoid, d_sigmoid),
+            (3, tanh, d_tanh),
+            (2, sigmoid, d_sigmoid),
+            (1, relu, d_relu),
         ];
 
         let mut net = BPNN::new(2, &layer_settings, mse, d_mse);
@@ -27,16 +27,15 @@ mod demo {
         let rate = 0.5;
         let factor = 0.1;
 
-        for i in 0..1001 {
+        for i in 1..1001 {
             let mut total_error = 0.;
             for (ip, tar) in &patterns {
                 let (_, error) = net.train_once(ip, tar, rate, factor);
-                // println!("input: {}\noutput: {}", ip, op);
                 total_error += error;
             }
 
             if i % 100 == 0 {
-                println!("round: {}, loss: {}", i, total_error);
+                println!("iteration: {:6}    error: {}", i, total_error);
             }
         }
         println!();

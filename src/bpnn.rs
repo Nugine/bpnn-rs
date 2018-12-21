@@ -13,8 +13,8 @@ pub struct BPNN {
     changes: Vec<Matrix>,
     activations: Vec<Activation>,
     d_activations: Vec<DActivation>,
-    cost: Cost,
-    d_cost: DCost,
+    loss: Loss,
+    d_loss: DLoss,
 }
 
 #[allow(non_snake_case)]
@@ -22,8 +22,8 @@ impl BPNN {
     pub fn new(
         input_size: usize,
         layer_settings: &Vec<(usize, Activation, DActivation)>,
-        cost: Cost,
-        d_cost: DCost,
+        loss: Loss,
+        d_loss: DLoss,
     ) -> Self {
         let mut il = input_size + 1;
         let mut Ws: Vec<Matrix> = Vec::new();
@@ -45,8 +45,8 @@ impl BPNN {
             changes: Cs,
             activations: acts,
             d_activations: d_acts,
-            cost: cost,
-            d_cost: d_cost,
+            loss: loss,
+            d_loss: d_loss,
         }
     }
 
@@ -83,7 +83,7 @@ impl BPNN {
         }
 
         let mut d = vec![{
-            let e = (self.d_cost)(target, &a[l]);
+            let e = (self.d_loss)(target, &a[l]);
             let da = (d_activations[l - 1])(&a[l]);
             e * &da
         }];
@@ -114,7 +114,7 @@ impl BPNN {
             W[i].scaled_add(rate, &C[i]);
         }
 
-        let error = (self.cost)(target, &output);
+        let error = (self.loss)(target, &output);
         (output, error)
     }
 

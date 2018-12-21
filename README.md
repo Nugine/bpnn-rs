@@ -11,28 +11,27 @@
     cargo build
     cargo run
 
-This neural network learned the XOR function by training.
+The neural network learned XOR function by training.
 
-    round: 0, loss: 1.0948453133681346
-    round: 100, loss: 0.012072137341869835
-    round: 200, loss: 0.002283495138420435
-    round: 300, loss: 0.00473382896407484
-    round: 400, loss: 0.0021332081154567654
-    round: 500, loss: 0.0010898164807927476
-    round: 600, loss: 0.0006329531738574197
-    round: 700, loss: 0.0015553742817220394
-    round: 800, loss: 0.0007531364151855329
-    round: 900, loss: 0.0009064734253448057
-    round: 1000, loss: 0.0010263287000098294
+    iteration:    100    error: 0.353540086202427
+    iteration:    200    error: 0.32357823287350707
+    iteration:    300    error: 0.3097202209958916
+    iteration:    400    error: 0.0023114803357387847
+    iteration:    500    error: 0.00013376838445333176
+    iteration:    600    error: 0.000005882603134813142
+    iteration:    700    error: 0.00000021730736806563241
+    iteration:    800    error: 0.000000007709918967308345
+    iteration:    900    error: 0.0000000002713938800516082
+    iteration:   1000    error: 0.000000000009539007440859954
 
     input: [0, 0]
-    output: [0.026425549461858377]
+    output: [0]
 
     input: [1, 0]
-    output: [0.9909551058005059]
+    output: [0.9999999518814118]
 
     input: [0, 1]
-    output: [0.9908491211234489]
+    output: [0.9999996256794317]
 
     input: [1, 1]
-    output: [-0.03050681114398768]
+    output: [0.0000042431280589255715]
