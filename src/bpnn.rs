@@ -26,23 +26,23 @@ impl BPNN {
         d_loss: DLoss,
     ) -> Self {
         let mut il = input_size + 1;
-        let mut Ws: Vec<Matrix> = Vec::new();
-        let mut Cs: Vec<Matrix> = Vec::new();
+        let mut W: Vec<Matrix> = Vec::new();
+        let mut C: Vec<Matrix> = Vec::new();
         let mut acts: Vec<Activation> = Vec::new();
         let mut d_acts: Vec<DActivation> = Vec::new();
 
         for (ol, act, d_act) in layer_settings {
             let ol = *ol;
-            Ws.push(random_matrix(ol, il));
-            Cs.push(zero_matrix(ol, il));
+            W.push(random_matrix(ol, il));
+            C.push(zero_matrix(ol, il));
             acts.push(*act);
             d_acts.push(*d_act);
             il = ol;
         }
 
         Self {
-            weights: Ws,
-            changes: Cs,
+            weights: W,
+            changes: C,
             activations: acts,
             d_activations: d_acts,
             loss: loss,
@@ -50,13 +50,7 @@ impl BPNN {
         }
     }
 
-    pub fn train_once(
-        &mut self,
-        input: &Vector,
-        target: &Vector,
-        rate: f64,
-        factor: f64,
-    ) -> (Vector, f64) {
+    pub fn train_once(&mut self, input: &Vector, target: &Vector, rate: f64, factor: f64) -> f64 {
         let l = self.weights.len();
 
         assert_eq!(input.len(), self.weights[0].dim().1 - 1);
@@ -114,11 +108,17 @@ impl BPNN {
             W[i].scaled_add(rate, &C[i]);
         }
 
-        let error = (self.loss)(target, &output);
-        (output, error)
+        (self.loss)(target, &output)
     }
 
-    pub fn predict(&self, input: &Vector) -> Vector {
+    pub fn train(&mut self, patterns: &Vec<(Vector, Vector)>, rate: f64, factor: f64) -> f64 {
+        patterns
+            .into_iter()
+            .map(|(ip, op)| self.train_once(ip, op, rate, factor))
+            .sum()
+    }
+
+    pub fn predict_once(&self, input: &Vector) -> Vector {
         let l = self.weights.len();
 
         assert_eq!(input.len(), self.weights[0].dim().1 - 1);
@@ -135,5 +135,13 @@ impl BPNN {
         }
 
         vector
+    }
+
+    pub fn predict(&self, inputs: &Vec<Vector>) -> Vec<Vector> {
+        let mut v = Vec::new();
+        for ip in inputs {
+            v.push(self.predict_once(ip))
+        }
+        v
     }
 }
