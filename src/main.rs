@@ -16,7 +16,7 @@ mod demo {
             (1, relu, d_relu),
         ];
 
-        let mut net = BPNN::new(2, &layer_settings, mse, d_mse);
+        let mut net = BPNN::new(2, &layer_settings, sse, d_sse);
 
         let patterns = vec![
             (array![0., 0.], array![0.]),

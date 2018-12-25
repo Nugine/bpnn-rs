@@ -13,8 +13,8 @@ pub struct BPNN {
     changes: Vec<Matrix>,
     activations: Vec<Activation>,
     d_activations: Vec<DActivation>,
-    loss: Loss,
-    d_loss: DLoss,
+    cost: Cost,
+    d_cost: DCost,
 }
 
 #[allow(non_snake_case)]
@@ -22,8 +22,8 @@ impl BPNN {
     pub fn new(
         input_size: usize,
         layer_settings: &Vec<(usize, Activation, DActivation)>,
-        loss: Loss,
-        d_loss: DLoss,
+        cost: Cost,
+        d_cost: DCost,
     ) -> Self {
         let mut il = input_size + 1;
         let mut W: Vec<Matrix> = Vec::new();
@@ -45,11 +45,14 @@ impl BPNN {
             changes: C,
             activations: acts,
             d_activations: d_acts,
-            loss: loss,
-            d_loss: d_loss,
+            cost: cost,
+            d_cost: d_cost,
         }
     }
+}
 
+#[allow(non_snake_case)]
+impl BPNN {
     pub fn train_once(&mut self, input: &Vector, target: &Vector, rate: f64, factor: f64) -> f64 {
         let l = self.weights.len();
 
@@ -57,58 +60,61 @@ impl BPNN {
         assert_eq!(target.len(), self.weights[l - 1].dim().0);
 
         let W = &mut self.weights;
-
         let C = &mut self.changes;
-
         let activations = &self.activations;
         let d_activations = &self.d_activations;
 
-        let mut a = vec![{
+        let mut z = vec![{
             let mut v = input.to_vec();
             v.push(1.);
             Array::from_vec(v)
         }];
 
         for i in 0..l {
-            let x = &a[i];
+            let x = &z[i];
             let y = W[i].dot(x);
-            let act = (activations[i])(&y);
-            a.push(act)
+            z.push((activations[i])(&y))
         }
 
-        let mut d = vec![{
-            let e = (self.d_loss)(target, &a[l]);
-            let da = (d_activations[l - 1])(&a[l]);
+        let mut delta = {
+            let e = (self.d_cost)(target, &z[l]);
+            let da = (d_activations[l - 1])(&z[l]);
             e * &da
-        }];
+        };
 
-        for i in 0..(l - 1) {
-            let j = l - 1 - i;
-            let e = W[j].t().dot(&d[i]);
-            let da = (d_activations[j - 1])(&a[j]);
-            d.push(e * &da)
-        }
+        let output = z.pop().unwrap();
 
-        d.reverse();
+        for i in (1..l).rev() {
+            let new_delta = {
+                let e = W[i].t().dot(&delta);
+                let da = (d_activations[i - 1])(&z[i]);
+                e * &da
+            };
 
-        for i in 0..l {
-            W[i].scaled_add(factor, &C[i]);
-        }
-
-        let output = a.pop().unwrap();
-
-        for i in (0..l).rev() {
             let (ol, il) = C[i].dim();
-            let delta: Matrix = d.pop().unwrap().into_shape((ol, 1)).unwrap();
-            let ip: Matrix = a.pop().unwrap().into_shape((1, il)).unwrap();
-            C[i] = delta.dot(&ip);
+            let delta_2d: Matrix = delta.into_shape((ol, 1)).unwrap();
+            let z_i_t: Matrix = z.pop().unwrap().into_shape((1, il)).unwrap();
+
+            C[i] *= factor;
+            C[i].scaled_add(-rate, &delta_2d.dot(&z_i_t));
+
+            delta = new_delta;
+        }
+
+        {
+            let (ol, il) = C[0].dim();
+            let delta_2d: Matrix = delta.into_shape((ol, 1)).unwrap();
+            let z_i_t: Matrix = z.pop().unwrap().into_shape((1, il)).unwrap();
+
+            C[0] *= factor;
+            C[0].scaled_add(-rate, &delta_2d.dot(&z_i_t));
         }
 
         for i in 0..l {
-            W[i].scaled_add(rate, &C[i]);
+            W[i] += &C[i];
         }
 
-        (self.loss)(target, &output)
+        (self.cost)(target, &output)
     }
 
     pub fn train(&mut self, patterns: &Vec<(Vector, Vector)>, rate: f64, factor: f64) -> f64 {
@@ -117,7 +123,9 @@ impl BPNN {
             .map(|(ip, op)| self.train_once(ip, op, rate, factor))
             .sum()
     }
+}
 
+impl BPNN {
     pub fn predict_once(&self, input: &Vector) -> Vector {
         let l = self.weights.len();
 
